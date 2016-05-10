@@ -1,0 +1,7 @@
+{
+    "name": "mindtouch-http",
+    "testEnvironment": "node",
+    "verbose": false,
+    "coverageDirectory": "__coverage__",
+    "collectCoverage": true
+}
