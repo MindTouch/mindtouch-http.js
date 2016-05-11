@@ -45,7 +45,7 @@ function _cloneHeaders() {
     return cloned;
 }
 export class Plug {
-    constructor(url = '/', { uriParts = {}, headers = {}, timeout = null } = {}) {
+    constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params } = {}) {
 
         // Initialize the url for this instance
         this._url = new Uri(url);
@@ -59,7 +59,7 @@ export class Plug {
             this._url.removeQueryParam(uriParts.excludeQuery);
         }
 
-        // this._beforeRequest = (params) => Promise.resolve(params);
+        this._beforeRequest = beforeRequest;
         this._timeout = timeout;
         this._headers = headers;
     }
@@ -76,6 +76,8 @@ export class Plug {
         });
         return new Plug(this._url.toString(), {
             headers: this._headers,
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
             uriParts: { segments: values }
         });
     }
@@ -84,45 +86,63 @@ export class Plug {
         params[key] = value;
         return new Plug(this._url.toString(), {
             headers: this._headers,
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
             uriParts: { query: params }
         });
     }
     withParams(values = {}) {
         return new Plug(this._url.toString(), {
             headers: this._headers,
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
             uriParts: { query: values }
         });
     }
     withoutParam(key) {
         return new Plug(this._url.toString(), {
             headers: this._headers,
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
             uriParts: { excludeQuery: key }
         });
     }
     withHeader(key, value) {
         let newHeaders = _cloneHeaders.call(this);
         newHeaders[key] = value;
-        return new Plug(this._url.toString(), { headers: newHeaders });
+        return new Plug(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: newHeaders
+        });
     }
     withHeaders(values) {
         let newHeaders = _cloneHeaders.call(this);
         Object.keys(values).forEach((key) => {
             newHeaders[key] = values[key];
         });
-        return new Plug(this._url.toString(), { headers: newHeaders });
+        return new Plug(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: newHeaders
+        });
     }
     withoutHeader(key) {
         let newHeaders = _cloneHeaders.call(this);
         delete newHeaders[key];
-        return new Plug(this._url.toString(), { headers: newHeaders });
+        return new Plug(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: newHeaders
+        });
     }
     get(method = 'GET') {
-        let params = this.beforeRequest({ method: method, headers: _cloneHeaders.call(this) });
+        let params = this._beforeRequest({ method: method, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
     }
     post(body, mime, method = 'POST') {
         this._headers['Content-Type'] = mime;
-        let params = this.beforeRequest({ method: method, body: body, headers: _cloneHeaders.call(this) });
+        let params = this._beforeRequest({ method: method, body: body, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
     }
     put(body, mime) {
@@ -136,8 +156,5 @@ export class Plug {
     }
     delete() {
         return this.post(null, null, 'DELETE');
-    }
-    beforeRequest(params) {
-        return params;
     }
 }

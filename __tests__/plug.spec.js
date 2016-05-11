@@ -137,13 +137,5 @@ describe('Plug JS', () => {
                 return p.get();
             });
         });
-        describe('before fetch processing', () => {
-            pit('can alter params before sending a request', () => {
-                p.beforeRequest = jest.genMockFunction().mockReturnValue({ method: 'GET' });
-                return p.get().then(() => {
-                    expect(p.beforeRequest).toBeCalled();
-                });
-            });
-        });
     });
 });
