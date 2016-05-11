@@ -127,15 +127,38 @@ describe('Plug JS', () => {
                 return p.delete();
             });
         });
-        describe('HTTP codes', () => {
-            pit('can fail with a 5xx error', () => {
-                global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 500 })));
-                return p.get().catch((e) => expect(e).toBeDefined());
+    });
+    describe('beforeRequest handler', () => {
+        let p = null;
+        let mockBeforeRequest = jest.genMockFunction().mockReturnValueOnce({ method: 'GET' });
+        beforeEach(() => {
+            global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
+            p = new Plug('http://example.com/', { beforeRequest: mockBeforeRequest });
+        });
+        afterEach(() => {
+            p = null;
+        });
+        pit('can hook into the beforeRequest handler', () => {
+            return p.at('foo', 'bar').withParam('dog', 'cat').withHeaders({ 'X-Some-Custom-Header': 'Hello' }).get().then(() => {
+                expect(mockBeforeRequest).toBeCalled();
             });
-            pit('can pass with a 304 status', () => {
-                global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 304 })));
-                return p.get();
-            });
+        });
+    });
+    describe('HTTP codes', () => {
+        let p = null;
+        beforeEach(() => {
+            p = new Plug('http://example.com/');
+        });
+        afterEach(() => {
+            p = null;
+        });
+        pit('can fail with a 5xx error', () => {
+            global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 500 })));
+            return p.get().catch((e) => expect(e).toBeDefined());
+        });
+        pit('can pass with a 304 status', () => {
+            global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 304 })));
+            return p.get();
         });
     });
 });
