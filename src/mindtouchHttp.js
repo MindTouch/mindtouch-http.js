@@ -1,3 +1,3 @@
-import Plug from './src/plug';
-import Uri from './src/uri';
+import Plug from './plug';
+import Uri from './uri';
 export { Plug, Uri };
