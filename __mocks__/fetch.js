@@ -1,3 +1,4 @@
+/* eslint-env node */
 class Headers {
     constructor(obj) {
         this._headers = obj;
@@ -19,6 +20,12 @@ class Response {
     }
     get status() {
         return this._status;
+    }
+    text() {
+        return Promise.resolve('');
+    }
+    json() {
+        return Promise.resolve({});
     }
 }
 global.Headers = Headers;
