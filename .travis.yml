@@ -8,16 +8,13 @@ cache:
   directories:
     - node_modules
 
-before_install:
-  - npm -g install npm@3
+before_install: npm -g install npm@3
 
-install:
-  - npm install
+install: npm install
 
 script:
   - npm run test
   - npm run test-node
   - npm run inspect
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+after_success: bash <(curl -s https://codecov.io/bash)
