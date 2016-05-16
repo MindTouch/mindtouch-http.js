@@ -22,7 +22,17 @@ function _handleHttpError(response) {
 
         // Throw for all non-2xx status codes, except for 304
         if(!response.ok && response.status !== 304) {
-            reject(new Error(response.statusText));
+            Promise.all([
+                response.text(),
+                response.json()
+            ]).then(([ text, json ]) => {
+                reject({
+                    message: response.statusText,
+                    status: response.status,
+                    responseText: text,
+                    responseJson: json
+                });
+            });
         } else {
             resolve(response);
         }
