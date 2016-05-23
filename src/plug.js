@@ -146,25 +146,13 @@ export class Plug {
         let params = this._beforeRequest({ method: method, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
     }
-    getText() {
-        return this.get().then((r) => r.text());
-    }
-    getJson() {
-        return this.get().then((r) => r.json());
-    }
     post(body, mime, method = 'POST') {
         this._headers['Content-Type'] = mime;
         let params = this._beforeRequest({ method: method, body: body, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
     }
-    postJson(body, mime, method) {
-        return this.post(body, mime, method).then((r) => r.json());
-    }
     put(body, mime) {
         return this.post(body, mime, 'PUT');
-    }
-    putJson(body, mime) {
-        return this.postJson(body, mime, 'PUT');
     }
     head() {
         return this.get('HEAD');

@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test-node": "jest --config jest-node.json",
-    "test": "jest --config jest-jsdom.json",
+    "test-jsdom": "jest --config jest-jsdom.json",
+    "test": "npm run test-jsdom & npm run test-node;wait",
     "inspect": "eslint ./**/*.js"
   },
   "author": "MindTouch",
