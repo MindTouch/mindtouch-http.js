@@ -129,6 +129,9 @@ describe('Plug JS', () => {
             pit('can do a basic PUT request', () => {
                 return p.put('{"foo": "BAZ"}', 'application/json');
             });
+            pit('can do a basic PUT request that returns JSON', () => {
+                return p.putJson('{"foo": "BAZ"}', 'application/json');
+            });
             pit('can do a basic DELETE request', () => {
                 return p.delete();
             });

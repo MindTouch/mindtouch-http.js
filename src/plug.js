@@ -157,8 +157,14 @@ export class Plug {
         let params = this._beforeRequest({ method: method, body: body, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
     }
+    postJson(body, mime, method) {
+        return this.post(body, mime, method).then((r) => r.json());
+    }
     put(body, mime) {
         return this.post(body, mime, 'PUT');
+    }
+    putJson(body, mime) {
+        return this.postJson(body, mime, 'PUT');
     }
     head() {
         return this.get('HEAD');
