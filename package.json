@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "description": "A JavaScript library to construct URLs and make HTTP requests using the fetch API",
   "main": "src/mindtouchHttp.js",
+  "format": "esm",
+  "registry": "npm",
   "repository": {
     "type": "git",
     "url": "https://github.com/MindTouch/mindtouch-http.js"
