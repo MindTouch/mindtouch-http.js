@@ -146,12 +146,6 @@ export class Plug {
         let params = this._beforeRequest({ method: method, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
     }
-    getText() {
-        return this.get().then((r) => r.text());
-    }
-    getJson() {
-        return this.get().then((r) => r.json());
-    }
     post(body, mime, method = 'POST') {
         this._headers['Content-Type'] = mime;
         let params = this._beforeRequest({ method: method, body: body, headers: _cloneHeaders.call(this) });
