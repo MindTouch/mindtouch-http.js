@@ -109,12 +109,6 @@ describe('Plug JS', () => {
             pit('can do a basic GET request', () => {
                 return p.get();
             });
-            pit('can do a basic GET request for text', () => {
-                return p.getText();
-            });
-            pit('can do a basic GET request for JSON', () => {
-                return p.getJson();
-            });
             pit('can do a basic HEAD request', () => {
                 return p.head();
             });

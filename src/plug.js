@@ -22,15 +22,11 @@ function _handleHttpError(response) {
 
         // Throw for all non-2xx status codes, except for 304
         if(!response.ok && response.status !== 304) {
-            Promise.all([
-                response.text(),
-                response.json()
-            ]).then(([ text, json ]) => {
+            response.text().then((text) => {
                 reject({
                     message: response.statusText,
                     status: response.status,
-                    responseText: text,
-                    responseJson: json
+                    responseText: text
                 });
             });
         } else {
@@ -149,12 +145,6 @@ export class Plug {
     get(method = 'GET') {
         let params = this._beforeRequest({ method: method, headers: _cloneHeaders.call(this) });
         return _doFetch.call(this, params);
-    }
-    getText() {
-        return this.get().then((r) => r.text());
-    }
-    getJson() {
-        return this.get().then((r) => r.json());
     }
     post(body, mime, method = 'POST') {
         this._headers['Content-Type'] = mime;
