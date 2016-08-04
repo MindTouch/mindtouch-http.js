@@ -37,6 +37,9 @@ export class Uri {
     get origin() {
         return this.parsedUrl.origin;
     }
+    getQueryParam(key) {
+        return this.parsedUrl.searchParams.get(key);
+    }
     removeQueryParam(key) {
         this.parsedUrl.searchParams.delete(key);
     }
@@ -47,6 +50,10 @@ export class Uri {
         Object.keys(queryMap).forEach((key) => {
             this.addQueryParam(key, queryMap[key]);
         });
+    }
+    setQueryParam(key, value) {
+        this.removeQueryParam(key);
+        this.addQueryParam(key, value);
     }
     addSegments(...segments) {
         let path = '';

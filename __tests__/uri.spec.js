@@ -37,6 +37,9 @@ describe('URI', () => {
             it('can fetch the origin', () => {
                 expect(uri.origin).toBe('https://www.example.com');
             });
+            it('can fetch a query param', () => {
+                expect(uri.getQueryParam('dog')).toBe('cat');
+            });
         });
         describe('manipulation tests', () => {
             it('can set the protocol', () => {
@@ -71,6 +74,11 @@ describe('URI', () => {
             it('can try to remove non-existent query parameters', () => {
                 uri.removeQueryParam('132465798');
                 expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat&llama=goat#abcd=1234&defg=5678');
+            });
+            it('can set query parameters', () => {
+                uri.addQueryParam('qux', 'bar');
+                uri.setQueryParam('qux', 'baz');
+                expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat&llama=goat&qux=baz#abcd=1234&defg=5678');
             });
         });
     });
