@@ -2,6 +2,6 @@
     "name": "mindtouch-http",
     "testEnvironment": "node",
     "verbose": false,
-    "coverageDirectory": "__coverage__",
+    "coverageDirectory": "__coverage-node__",
     "collectCoverage": true
 }

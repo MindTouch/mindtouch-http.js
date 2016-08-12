@@ -34,6 +34,22 @@ function _handleHttpError(response) {
         }
     });
 }
+function _readCookies(request) {
+    if(this._cookieManager !== null) {
+        return this._cookieManager.getCookieString(request.url).then((cookieString) => {
+            if(cookieString !== '') {
+                request.headers.set('Cookie', cookieString);
+            }
+        }).then(() => request);
+    }
+    return Promise.resolve(request);
+}
+function _handleCookies(response) {
+    if(this._cookieManager !== null) {
+        return this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
+    }
+    return Promise.resolve(response);
+}
 function _doFetch({ method, headers, body = null }) {
     let requestHeaders = new Headers(headers);
     let requestData = { method: method, headers: requestHeaders, credentials: 'include' };
@@ -41,7 +57,7 @@ function _doFetch({ method, headers, body = null }) {
         requestData.body = body;
     }
     let request = new Request(this._url.toString(), requestData);
-    return fetch(request).then(_handleHttpError);
+    return _readCookies.call(this, request).then(fetch).then(_handleHttpError).then(_handleCookies.bind(this));
 }
 function _cloneHeaders() {
     let cloned = {};
@@ -51,7 +67,7 @@ function _cloneHeaders() {
     return cloned;
 }
 export class Plug {
-    constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params } = {}) {
+    constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params, cookieManager = null } = {}) {
 
         // Initialize the url for this instance
         this._url = new Uri(url);
@@ -68,6 +84,7 @@ export class Plug {
         this._beforeRequest = beforeRequest;
         this._timeout = timeout;
         this._headers = headers;
+        this._cookieManager = cookieManager;
     }
     get url() {
         return this._url.toString();
@@ -84,7 +101,8 @@ export class Plug {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            uriParts: { segments: values }
+            uriParts: { segments: values },
+            cookieManager: this._cookieManager
         });
     }
     withParam(key, value) {
@@ -94,7 +112,8 @@ export class Plug {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            uriParts: { query: params }
+            uriParts: { query: params },
+            cookieManager: this._cookieManager
         });
     }
     withParams(values = {}) {
@@ -102,7 +121,8 @@ export class Plug {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            uriParts: { query: values }
+            uriParts: { query: values },
+            cookieManager: this._cookieManager
         });
     }
     withoutParam(key) {
@@ -110,7 +130,8 @@ export class Plug {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            uriParts: { excludeQuery: key }
+            uriParts: { excludeQuery: key },
+            cookieManager: this._cookieManager
         });
     }
     withHeader(key, value) {
@@ -119,7 +140,8 @@ export class Plug {
         return new Plug(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            headers: newHeaders
+            headers: newHeaders,
+            cookieManager: this._cookieManager
         });
     }
     withHeaders(values) {
@@ -130,7 +152,8 @@ export class Plug {
         return new Plug(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            headers: newHeaders
+            headers: newHeaders,
+            cookieManager: this._cookieManager
         });
     }
     withoutHeader(key) {
@@ -139,7 +162,8 @@ export class Plug {
         return new Plug(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
-            headers: newHeaders
+            headers: newHeaders,
+            cookieManager: this._cookieManager
         });
     }
     get(method = 'GET') {
