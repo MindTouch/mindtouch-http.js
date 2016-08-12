@@ -1,6 +1,6 @@
 {
     "name": "mindtouch-http",
     "verbose": false,
-    "coverageDirectory": "__coverage__",
+    "coverageDirectory": "__coverage-jsdom__",
     "collectCoverage": true
 }

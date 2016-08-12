@@ -21,7 +21,8 @@ describe('Plug JS', () => {
                 headers: {
                     'X-Deki-Token': 'abcd1234'
                 },
-                timeout: 200
+                timeout: 200,
+                cookieLib: {}
             };
             let p = new Plug('http://www.example.com', params);
             expect(p.url).toBe('http://www.example.com/dog/cat/123?foo=bar&def=456');
@@ -158,6 +159,24 @@ describe('Plug JS', () => {
         });
         pit('can pass with a 304 status', () => {
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 304 })));
+            return p.get();
+        });
+    });
+    describe('Cookie Jar', () => {
+        jest.unmock('tough-cookie');
+        jest.unmock('../src/cookieJar');
+        let p = null;
+        beforeEach(() => {
+            const cookieJar = require('../src/cookieJar');
+            cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve('value=this is a cookie value'));
+            global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
+            p = new Plug('http://example.com/', { cookieManager: cookieJar });
+        });
+        afterEach(() => {
+            p = null;
+            global.fetch = null;
+        });
+        it('can do requests with a cookie jar in place', () => {
             return p.get();
         });
     });

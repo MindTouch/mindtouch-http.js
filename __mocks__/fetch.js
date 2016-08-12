@@ -9,8 +9,24 @@ class Headers {
         }
         return this._headers[key];
     }
+    set(key, value) {
+        if(!this._headers) {
+            this._headers = {};
+        }
+        this._headers[key] = value;
+    }
+    getAll() {
+        return [];
+    }
 }
-class Request {}
+class Request {
+    get url() {
+        return 'https://www.example.com';
+    }
+    get headers() {
+        return new Headers();
+    }
+}
 class Response {
     constructor(body = '', init = {}) {
         this._status = init.status || 200;
@@ -20,6 +36,9 @@ class Response {
     }
     get status() {
         return this._status;
+    }
+    get headers() {
+        return new Headers();
     }
     text() {
         return Promise.resolve('');
