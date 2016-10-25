@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Uri } from './uri';
+import { Uri } from './uri.js';
 function _handleHttpError(response) {
     return new Promise((resolve, reject) => {
 

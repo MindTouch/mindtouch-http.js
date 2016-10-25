@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { UriParser } from './uriParser';
+import { UriParser } from './lib/uriParser.js';
 
 export class Uri {
     constructor(url = '') {

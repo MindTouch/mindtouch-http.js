@@ -1,4 +1,4 @@
-import { Plug } from './plug';
+import { Plug } from './plug.js';
 import { progressPlugFactory } from './progressPlugFactory.js';
-import { Uri } from './uri';
+import { Uri } from './uri.js';
 export { Plug, Uri, progressPlugFactory };

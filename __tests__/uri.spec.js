@@ -1,7 +1,5 @@
 /* eslint-env jasmine, jest */
-jest.unmock('../src/uri');
-jest.unmock('../src/uriParser');
-import { Uri } from '../src/uri';
+import { Uri } from '../uri';
 describe('URI', () => {
     describe('constructor tests', () => {
         it('can construct a plain URI', () => {
@@ -27,6 +25,9 @@ describe('URI', () => {
         describe('read tests', () => {
             it('can convert to a string', () => {
                 expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat&llama=goat#abcd=1234&defg=5678');
+            });
+            it('can fetch the URI path', () => {
+                expect(uri.path).toBe('/foo/bar');
             });
             it('can fetch the protocol', () => {
                 expect(uri.protocol).toBe('https:');
