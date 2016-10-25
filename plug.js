@@ -34,6 +34,22 @@ function _handleHttpError(response) {
         }
     });
 }
+function _readCookies(request) {
+    if(this._cookieManager !== null) {
+        return this._cookieManager.getCookieString(request.url).then((cookieString) => {
+            if(cookieString !== '') {
+                request.headers.set('Cookie', cookieString);
+            }
+        }).then(() => request);
+    }
+    return Promise.resolve(request);
+}
+function _handleCookies(response) {
+    if(this._cookieManager !== null) {
+        return this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
+    }
+    return Promise.resolve(response);
+}
 function _doFetch({ method, headers, body = null }) {
     let requestHeaders = new Headers(headers);
     let requestData = { method: method, headers: requestHeaders, credentials: 'include' };
@@ -41,25 +57,9 @@ function _doFetch({ method, headers, body = null }) {
         requestData.body = body;
     }
     let request = new Request(this._url.toString(), requestData);
-    return this._readCookies(request).then(fetch).then(_handleHttpError).then(this._handleCookies.bind(this));
+    return _readCookies.call(this, request).then(fetch).then(_handleHttpError).then(_handleCookies.bind(this));
 }
 export class Plug {
-    _readCookies(request) {
-        if(this._cookieManager !== null) {
-            return this._cookieManager.getCookieString(request.url).then((cookieString) => {
-                if(cookieString !== '') {
-                    request.headers.set('Cookie', cookieString);
-                }
-            }).then(() => request);
-        }
-        return Promise.resolve(request);
-    }
-    _handleCookies(response) {
-        if(this._cookieManager !== null) {
-            return this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
-        }
-        return Promise.resolve(response);
-    }
     constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params, cookieManager = null } = {}) {
 
         // Initialize the url for this instance
