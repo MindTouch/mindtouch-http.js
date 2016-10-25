@@ -1,5 +1,5 @@
 /* eslint-env jasmine, jest */
-import { UriParser, UriSearchParams } from '../lib/uriParser';
+import { UriParser, UriSearchParams } from '../lib/uriParser.js';
 describe('URI Parser', () => {
     describe('construction', () => {
         it('can construct a parser (simple)', () => {

@@ -1,5 +1,5 @@
 /* eslint-env jasmine, jest */
-import { Uri } from '../uri';
+import { Uri } from '../uri.js';
 describe('URI', () => {
     describe('constructor tests', () => {
         it('can construct a plain URI', () => {

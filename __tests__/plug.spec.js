@@ -1,7 +1,7 @@
 /* eslint-env node, jasmine, jest */
 /* global Response:false */
 import 'fetch';
-import { Plug } from '../plug';
+import { Plug } from '../plug.js';
 describe('Plug JS', () => {
     describe('constructor', () => {
         it('can construct a Plug with defaults', () => {
