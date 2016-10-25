@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { UriParser } from './uriParser';
+import { UriParser } from './lib/uriParser.js';
 
 export class Uri {
     constructor(url = '') {
@@ -36,6 +36,9 @@ export class Uri {
     }
     get origin() {
         return this.parsedUrl.origin;
+    }
+    get path() {
+        return this.parsedUrl.pathname;
     }
     getQueryParam(key) {
         return this.parsedUrl.searchParams.get(key);

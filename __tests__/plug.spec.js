@@ -1,10 +1,7 @@
 /* eslint-env node, jasmine, jest */
 /* global Response:false */
-jest.unmock('../src/plug');
-jest.unmock('../src/uri');
-jest.unmock('../src/uriParser');
 import 'fetch';
-import { Plug } from '../src/plug';
+import { Plug } from '../plug.js';
 describe('Plug JS', () => {
     describe('constructor', () => {
         it('can construct a Plug with defaults', () => {
@@ -163,11 +160,9 @@ describe('Plug JS', () => {
         });
     });
     describe('Cookie Jar', () => {
-        jest.unmock('tough-cookie');
-        jest.unmock('../src/cookieJar');
         let p = null;
         beforeEach(() => {
-            const cookieJar = require('../src/cookieJar');
+            const cookieJar = require('../lib/cookieJar');
             cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve('value=this is a cookie value'));
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
             p = new Plug('http://example.com/', { cookieManager: cookieJar });

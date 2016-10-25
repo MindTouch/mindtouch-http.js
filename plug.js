@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Uri } from './uri';
+import { Uri } from './uri.js';
 function _handleHttpError(response) {
     return new Promise((resolve, reject) => {
 
@@ -59,13 +59,6 @@ function _doFetch({ method, headers, body = null }) {
     let request = new Request(this._url.toString(), requestData);
     return _readCookies.call(this, request).then(fetch).then(_handleHttpError).then(_handleCookies.bind(this));
 }
-function _cloneHeaders() {
-    let cloned = {};
-    Object.keys(this._headers).forEach((key) => {
-        cloned[key] = this._headers[key];
-    });
-    return cloned;
-}
 export class Plug {
     constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params, cookieManager = null } = {}) {
 
@@ -94,10 +87,10 @@ export class Plug {
     }
     at(...segments) {
         var values = [];
-        segments.forEach(function(segment) {
-            values.push(segment.toString());
+        segments.forEach((segment) => {
+            values.push(encodeURIComponent(segment.toString()));
         });
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
@@ -108,7 +101,7 @@ export class Plug {
     withParam(key, value) {
         let params = {};
         params[key] = value;
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
@@ -117,7 +110,7 @@ export class Plug {
         });
     }
     withParams(values = {}) {
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
@@ -126,7 +119,7 @@ export class Plug {
         });
     }
     withoutParam(key) {
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
@@ -135,9 +128,9 @@ export class Plug {
         });
     }
     withHeader(key, value) {
-        let newHeaders = _cloneHeaders.call(this);
+        let newHeaders = Object.assign({}, this._headers);
         newHeaders[key] = value;
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
@@ -145,11 +138,11 @@ export class Plug {
         });
     }
     withHeaders(values) {
-        let newHeaders = _cloneHeaders.call(this);
+        let newHeaders = Object.assign({}, this._headers);
         Object.keys(values).forEach((key) => {
             newHeaders[key] = values[key];
         });
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
@@ -157,9 +150,9 @@ export class Plug {
         });
     }
     withoutHeader(key) {
-        let newHeaders = _cloneHeaders.call(this);
+        let newHeaders = Object.assign({}, this._headers);
         delete newHeaders[key];
-        return new Plug(this._url.toString(), {
+        return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
@@ -167,12 +160,12 @@ export class Plug {
         });
     }
     get(method = 'GET') {
-        let params = this._beforeRequest({ method: method, headers: _cloneHeaders.call(this) });
+        let params = this._beforeRequest({ method: method, headers: Object.assign({}, this._headers) });
         return _doFetch.call(this, params);
     }
     post(body, mime, method = 'POST') {
         this._headers['Content-Type'] = mime;
-        let params = this._beforeRequest({ method: method, body: body, headers: _cloneHeaders.call(this) });
+        let params = this._beforeRequest({ method: method, body: body, headers: Object.assign({}, this._headers) });
         return _doFetch.call(this, params);
     }
     put(body, mime) {

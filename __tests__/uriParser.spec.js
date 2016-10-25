@@ -1,6 +1,5 @@
 /* eslint-env jasmine, jest */
-jest.unmock('../src/uriParser');
-import { UriParser, UriSearchParams } from '../src/uriParser';
+import { UriParser, UriSearchParams } from '../lib/uriParser.js';
 describe('URI Parser', () => {
     describe('construction', () => {
         it('can construct a parser (simple)', () => {

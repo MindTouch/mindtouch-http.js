@@ -1,7 +1,5 @@
 /* eslint-env node, jasmine, jest */
-jest.unmock('tough-cookie');
-jest.unmock('../src/cookieJar');
-const cj = require('../src/cookieJar');
+const cj = require('../lib/cookieJar');
 describe('Cookie Jar tests', () => {
     const cookieUrl = 'https://www.example.com';
     it('can get all of the cookies', () => {
