@@ -164,7 +164,9 @@ export class Plug {
         return _doFetch.call(this, params);
     }
     post(body, mime, method = 'POST') {
-        this._headers['Content-Type'] = mime;
+        if(mime) {
+            this._headers['Content-Type'] = mime;
+        }
         let params = this._beforeRequest({ method: method, body: body, headers: Object.assign({}, this._headers) });
         return _doFetch.call(this, params);
     }
