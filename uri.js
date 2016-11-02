@@ -40,6 +40,12 @@ export class Uri {
     get path() {
         return this.parsedUrl.pathname;
     }
+    get search() {
+        return this.parsedUrl.params.count === 0 ? '' : `?${this.parsedUrl.params.toString()}`;
+    }
+    get hash() {
+        return this.parsedUrl.hash;
+    }
     getQueryParam(key) {
         return this.parsedUrl.searchParams.get(key);
     }
