@@ -41,6 +41,12 @@ describe('URI', () => {
             it('can fetch a query param', () => {
                 expect(uri.getQueryParam('dog')).toBe('cat');
             });
+            it('can fetch the search string', () => {
+                expect(uri.search).toBe('?dog=cat&llama=goat');
+            });
+            it('can fetch the hash string', () => {
+                expect(uri.hash).toBe('#abcd=1234&defg=5678');
+            });
         });
         describe('manipulation tests', () => {
             it('can set the protocol', () => {
