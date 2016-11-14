@@ -53,7 +53,8 @@ export class Uri {
         this.parsedUrl.searchParams.delete(key);
     }
     addQueryParam(key, value) {
-        this.parsedUrl.searchParams.append(key, encodeURIComponent(value));
+        const paramVal = value === null || typeof value === 'undefined' ? '' : encodeURIComponent(value);
+        this.parsedUrl.searchParams.append(key, paramVal);
     }
     addQueryParams(queryMap) {
         Object.keys(queryMap).forEach((key) => {
