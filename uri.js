@@ -64,6 +64,11 @@ export class Uri {
         this.removeQueryParam(key);
         this.addQueryParam(key, value);
     }
+    setQueryParams(queryMap) {
+        Object.keys(queryMap).forEach((key) => {
+            this.setQueryParam(key, queryMap[key]);
+        });
+    }
     addSegments(...segments) {
         let path = '';
         segments.forEach((segment) => {
