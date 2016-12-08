@@ -88,7 +88,7 @@ export class Plug {
     at(...segments) {
         var values = [];
         segments.forEach((segment) => {
-            values.push(encodeURIComponent(segment.toString()));
+            values.push(segment.toString());
         });
         return new this.constructor(this._url.toString(), {
             headers: this._headers,
