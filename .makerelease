@@ -1,0 +1,5 @@
+#!/bin/bash
+
+yarn docs
+yarn bundle
+yarn version --new-version $1 --no-git-tag-version
