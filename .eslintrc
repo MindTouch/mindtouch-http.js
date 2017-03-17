@@ -11,5 +11,15 @@
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module"
+  },
+  "rules": {
+    "valid-jsdoc": [ 1, {
+      "prefer": { "return": "returns" },
+      "preferType": { "object": "Object", "string": "String", "number": "Number" },
+      "requireReturn": false,
+      "requireReturnType": true,
+      "requireParamDescription": true,
+      "requireReturnDescription": true
+    } ]
   }
 }

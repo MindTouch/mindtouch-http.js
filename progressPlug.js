@@ -51,10 +51,31 @@ function _doRequest({ method, headers, body = null, progressInfo }) {
     progressInfo.callback({ loaded: 0, total: progressInfo.size });
     return _readCookies.call(this, request).then(_doXhr).then(_handleCookies.bind(this));
 }
+
+/**
+ * A class that performs HTTP POST and PUT requests, and allows for the progress of the uploaded data to be reported.
+ */
 export class ProgressPlug extends Plug {
+
+    /**
+     * Construct a ProgressPlug object.
+     * @param {String} [url] The initial URL for the Plug.
+     * @param {Object} params The parameters that direct the construction and behavior of the Plug. See {@see Plug} for details.
+     */
     constructor(url, params) {
         super(url, params);
     }
+
+    /**
+     * Perform an HTTP POST request, enabling progress callback notifications.
+     * @param {String} body The body of the POST.
+     * @param {String} mime The mime type of the request, set in the `Content-Type` header.
+     * @param {String} [method=POST] The HTTP method to use with the POST logic.
+     * @param {Object} [progressInfo] An object containing parameters to receive the progress notifications.
+     * @param {Number} [progressInfo.size] The Number of bytes that are uploaded before a notification callback occurs.
+     * @param {function} [progressInfo.callback] A function that is called to notify about a progress event.
+     * @returns {Promise} A Promise that, when resolved, yields the {Response} object as defined by the fetch API.
+     */
     post(body, mime, method = 'POST', progressInfo = { size: 0, callback: () => {} }) {
         if(mime) {
             this._headers['Content-Type'] = mime;
@@ -63,6 +84,16 @@ export class ProgressPlug extends Plug {
         params.progressInfo = progressInfo;
         return _doRequest.call(this, params);
     }
+
+    /**
+     * Perform an HTTP PUT request, enabling progress callback notifications.
+     * @param {String} body The body of the PUT.
+     * @param {String} mime The mime type of the request, set in the `Content-Type` header.
+     * @param {Object} [progressInfo] An object containing parameters to receive the progress notifications.
+     * @param {Number} [progressInfo.size] The Number of bytes that are uploaded before a notification callback occurs.
+     * @param {function} [progressInfo.callback] A function that is called to notify about a progress event.
+     * @returns {Promise} A Promise that, when resolved, yields the {Response} object as defined by the fetch API.
+     */
     put(body, mime, progressInfo) {
         return this.post(body, mime, 'PUT', progressInfo);
     }
