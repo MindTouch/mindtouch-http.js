@@ -16,6 +16,5 @@ script:
   - yarn inspect
   - yarn test-jsdom
   - yarn test-node
-  - yarn bundle
 
 after_success: bash <(curl -s https://codecov.io/bash)
