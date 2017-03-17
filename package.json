@@ -1,7 +1,7 @@
 {
   "name": "mindtouch-http",
   "main": "dist/index.js",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A JavaScript library to construct URLs and make HTTP requests using the fetch API",
   "format": "esm",
   "registry": "npm",
@@ -15,7 +15,8 @@
     "test-jsdom": "jest --config jest-jsdom.json",
     "watch-jsdom": "jest --config jest-jsdom.json --watch",
     "test": "npm run test-jsdom & npm run test-node;wait",
-    "inspect": "eslint ./**/*.js"
+    "inspect": "eslint ./*.js ./lib/**/*.js ./__tests__/*.js",
+    "bundle": "rollup --config .rollup.config.js"
   },
   "author": "MindTouch",
   "license": "Apache-2.0",
