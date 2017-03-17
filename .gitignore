@@ -2,4 +2,3 @@ node_modules/
 __coverage-*__/
 npm-debug.log
 .idea/
-yarn.lock

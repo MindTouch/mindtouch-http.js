@@ -7,17 +7,11 @@ notifications:
 
       # engineering-webdevs
       - secure: "Zcql51JT8oqV0dhYEThtkd0jPD34z2fyIShCmFeEs/2Mj7vvl3c4OYG5fKJTZPC6zt3rmptCQU/wrzgQKJ6WQ2Aj4mkMVjf+6BUl+vXcEY3+/V+ciNulgsVnAR2WN8W4XvXIZNNvdDuiEZDB/rIc5q1ksueGUNLPEWYz2aRxp7kSoZRv3fQpc8AaIFjY0DmBI/X7C/BLN5MH++qA+3T5uzHt/ny2h6HJXKBTKifhlm/viJZTb6fpS0CZyUTgBSpjh1JRPKBPYeXUC5aODz/z5dp2l3/Y6nr7uhfFMdjvpNAI0juw/2v6qx313iuY9/cso1mnFW1y23GciyAS4dx2iffy7nyCPpd+xA644cxM83PqkIcZNFNyU3gcDhCVXjMEM+rsXvBDwmxq+TbABLGLElSQ93Qvf57enXBAZ10qW3WTV7H+NlHueI0ncgnX8DF+apmNHdMm38yTEcJ0Wy/LTwYuwzZyRnZ6UDjBIJtXiiNcD6VdxL6vUm6SHbLC4ZQq2L3vE47gj8pBveFoS3/jLMf3Ahc3+9f65GV6l83mvKkBnyHe/hhfdMdSVFith03KwbgwS0AONyCNYTQdfrxBuZEO9Co9KDsz0xu2WHVcX36Ts/vVhTSNei4R7Gj4P3EZO2Z8TcHbNjlmvF4Or3Ji7B1lMCCVRoJlrJzUXdWsCpQ="
-cache:
-  directories:
-    - $HOME/.npm
-
-before_install: npm -g install npm@3
-
-install: npm install
+cache: yarn
 
 script:
-  - npm run test
-  - npm run test-node
-  - npm run inspect
+  - yarn test
+  - yarn test-node
+  - yarn inspect
 
 after_success: bash <(curl -s https://codecov.io/bash)
