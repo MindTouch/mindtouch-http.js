@@ -1,5 +1,5 @@
 {
-  "name": "mindtouch-http",
+  "name": "mindtouch-http.js",
   "main": "dist/index.js",
   "version": "2.0.1",
   "description": "A JavaScript library to construct URLs and make HTTP requests using the fetch API",
