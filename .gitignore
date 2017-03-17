@@ -1,5 +1,5 @@
 node_modules/
 __coverage-*__/
+.idea
+.DS_Store
 npm-debug.log
-.idea/
-yarn.lock

@@ -104,24 +104,24 @@ describe('Plug JS', () => {
             p = null;
         });
         describe('GET', () => {
-            pit('can do a basic GET request', () => {
+            it('can do a basic GET request', () => {
                 return p.get();
             });
-            pit('can do a basic HEAD request', () => {
+            it('can do a basic HEAD request', () => {
                 return p.head();
             });
-            pit('can do a basic OPTIONS request', () => {
+            it('can do a basic OPTIONS request', () => {
                 return p.options();
             });
         });
         describe('POST', () => {
-            pit('can do a basic POST request', () => {
+            it('can do a basic POST request', () => {
                 return p.post('{"foo": "BAZ"}', 'application/json');
             });
-            pit('can do a basic PUT request', () => {
+            it('can do a basic PUT request', () => {
                 return p.put('{"foo": "BAZ"}', 'application/json');
             });
-            pit('can do a basic DELETE request', () => {
+            it('can do a basic DELETE request', () => {
                 return p.delete();
             });
         });
@@ -136,7 +136,7 @@ describe('Plug JS', () => {
         afterEach(() => {
             p = null;
         });
-        pit('can hook into the beforeRequest handler', () => {
+        it('can hook into the beforeRequest handler', () => {
             return p.at('foo', 'bar').withParam('dog', 'cat').withHeaders({ 'X-Some-Custom-Header': 'Hello' }).get().then(() => {
                 expect(mockBeforeRequest).toBeCalled();
             });
@@ -150,32 +150,34 @@ describe('Plug JS', () => {
         afterEach(() => {
             p = null;
         });
-        pit('can fail with a 5xx error', () => {
+        it('can fail with a 5xx error', () => {
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 500 })));
             return p.get().catch((e) => expect(e).toBeDefined());
         });
-        pit('can pass with a 304 status', () => {
+        it('can pass with a 304 status', () => {
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 304 })));
             return p.get();
         });
     });
     describe('Cookie Jar', () => {
         let p = null;
-        const cookieJar = require('../lib/cookieJar');
         beforeEach(() => {
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
-            p = new Plug('http://example.com/', { cookieManager: cookieJar });
         });
         afterEach(() => {
             p = null;
             global.fetch = null;
         });
         it('can do requests with a cookie jar in place', () => {
+            const cookieJar = require('../lib/cookieJar');
             cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve('value=this is a cookie value'));
+            p = new Plug('http://example.com/', { cookieManager: cookieJar });
             return p.get();
         });
         it('can do requests with a cookie jar in place (empty cookie)', () => {
+            const cookieJar = require('../lib/cookieJar');
             cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(''));
+            p = new Plug('http://example.com/', { cookieManager: cookieJar });
             return p.get();
         });
     });
