@@ -5,6 +5,7 @@ describe('URI', () => {
         it('can construct a plain URI', () => {
             let uri = new Uri('http://www.example.com');
             expect(uri).toBeDefined();
+            expect(uri.search).toBe('');
         });
         it('can construct an empty URI', () => {
             let uri = new Uri();

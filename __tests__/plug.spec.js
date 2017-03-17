@@ -162,16 +162,22 @@ describe('Plug JS', () => {
     describe('Cookie Jar', () => {
         let p = null;
         beforeEach(() => {
-            const cookieJar = require('../lib/cookieJar');
-            cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve('value=this is a cookie value'));
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
-            p = new Plug('http://example.com/', { cookieManager: cookieJar });
         });
         afterEach(() => {
             p = null;
             global.fetch = null;
         });
         it('can do requests with a cookie jar in place', () => {
+            const cookieJar = require('../lib/cookieJar');
+            cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve('value=this is a cookie value'));
+            p = new Plug('http://example.com/', { cookieManager: cookieJar });
+            return p.get();
+        });
+        it('can do requests with a cookie jar in place (empty cookie)', () => {
+            const cookieJar = require('../lib/cookieJar');
+            cookieJar.getCookieString = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(''));
+            p = new Plug('http://example.com/', { cookieManager: cookieJar });
             return p.get();
         });
     });
