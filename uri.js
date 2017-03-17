@@ -112,7 +112,8 @@ export class Uri {
      * @param {String|Number|Boolean} value The value of the added query parameter.
      */
     addQueryParam(key, value) {
-        this.parsedUrl.searchParams.append(key, encodeURIComponent(value));
+        const paramVal = value === null || typeof value === 'undefined' ? '' : encodeURIComponent(value);
+        this.parsedUrl.searchParams.append(key, paramVal);
     }
 
     /**
@@ -133,6 +134,16 @@ export class Uri {
     setQueryParam(key, value) {
         this.removeQueryParam(key);
         this.addQueryParam(key, value);
+    }
+
+    /**
+     * Set a batch of query parameters.
+     * @param {Object} queryMap A list of key-value pairs to set as query parameters. If any of the keys of this input object conflict with existing query parameter keys, they will be replaced.
+     */
+    setQueryParams(queryMap) {
+        Object.keys(queryMap).forEach((key) => {
+            this.setQueryParam(key, queryMap[key]);
+        });
     }
 
     /**

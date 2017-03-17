@@ -37,8 +37,8 @@ describe('Plug JS', () => {
             plug = null;
         });
         it('can add segments', () => {
-            let p2 = plug.at('foo', 'bar');
-            expect(p2.url).toBe('http://www.example.com/foo/bar');
+            let p2 = plug.at('@api', 'foo', 'bar');
+            expect(p2.url).toBe('http://www.example.com/@api/foo/bar');
             expect(plug.url).toBe('http://www.example.com/');
         });
         it('can add no query params', () => {

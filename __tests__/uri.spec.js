@@ -69,7 +69,8 @@ describe('URI', () => {
             it('can add query parameters', () => {
                 uri.addQueryParam('new', 'param');
                 uri.addQueryParam('new2', 'Bling $$');
-                expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat&llama=goat&new=param&new2=Bling%20%24%24#abcd=1234&defg=5678');
+                uri.addQueryParam('new3', null);
+                expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat&llama=goat&new=param&new2=Bling%20%24%24&new3=#abcd=1234&defg=5678');
             });
             it('can batch-add query params', () => {
                 uri.addQueryParams({ a: '1', b: '2', c: '3' });
@@ -78,6 +79,9 @@ describe('URI', () => {
             it('can remove query parameters', () => {
                 uri.removeQueryParam('llama');
                 expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat#abcd=1234&defg=5678');
+                uri.removeQueryParam('dog');
+                expect(uri.search).toBe('');
+                expect(uri.toString()).toBe('https://www.example.com/foo/bar#abcd=1234&defg=5678');
             });
             it('can try to remove non-existent query parameters', () => {
                 uri.removeQueryParam('132465798');
@@ -87,6 +91,10 @@ describe('URI', () => {
                 uri.addQueryParam('qux', 'bar');
                 uri.setQueryParam('qux', 'baz');
                 expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=cat&llama=goat&qux=baz#abcd=1234&defg=5678');
+            });
+            it('can batch-set query parameters', () => {
+                uri.setQueryParams({ dog: 'gerbil', llama: 666 });
+                expect(uri.toString()).toBe('https://www.example.com/foo/bar?dog=gerbil&llama=666#abcd=1234&defg=5678');
             });
         });
     });

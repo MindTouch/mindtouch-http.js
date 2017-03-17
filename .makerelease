@@ -5,12 +5,6 @@ if [ -z $1 ]; then
     exit 1
 fi
 
-yarn version --new-version $1 --no-git-tag-version
-if [ $? -gt 0 ]; then
-    echo "Failure setting the new version."
-    exit 1
-fi
-
 yarn docs
 if [ $? -gt 0 ]; then
     echo "Failed while generating the docs for release $1."
@@ -22,3 +16,14 @@ if [ $? -gt 0 ]; then
     echo "Failed while generating CJS bundle $1."
     exit 1
 fi
+
+# TODO: Commit the docs and bundle
+# TODO: Remove the `--no-git-tag-version` argument below so a tag will be created along with the version bump.
+
+yarn version --new-version $1 --no-git-tag-version
+if [ $? -gt 0 ]; then
+    echo "Failure setting the new version."
+    exit 1
+fi
+
+# TODO: Create a github release based on the new tag
