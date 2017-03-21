@@ -243,7 +243,7 @@ class UriParser {
 }
 
 /**
- * Martian - Core JavaScript API for MindTouch
+ * mindtouch-http.js - A JavaScript library to construct URLs and make HTTP requests using the fetch API
  *
  * Copyright (c) 2015 MindTouch Inc.
  * www.mindtouch.com  oss@mindtouch.com
@@ -426,7 +426,7 @@ class Uri {
 }
 
 /**
- * Martian - Core JavaScript API for MindTouch
+ * mindtouch-http.js - A JavaScript library to construct URLs and make HTTP requests using the fetch API
  *
  * Copyright (c) 2015 MindTouch Inc.
  * www.mindtouch.com  oss@mindtouch.com
@@ -443,6 +443,13 @@ class Uri {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+function _isRedirectResponse(response) {
+    if(!response.headers.has('location')) {
+        return false;
+    }
+    const code = response.status;
+    return code === 301 || code === 302 || code === 303 || code === 307 || code === 308;
+}
 function _handleHttpError(response) {
     return new Promise((resolve, reject) => {
 
@@ -470,20 +477,42 @@ function _readCookies(request) {
     }
     return Promise.resolve(request);
 }
-function _handleCookies(response) {
+function _handleCookies(request, response) {
     if(this._cookieManager !== null) {
-        return this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
+        const promise = this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
+        if(this._followRedirects && _isRedirectResponse(response)) {
+
+            // follow redirect after handling set-cookie HTTP header
+            // eslint-disable-next-line no-use-before-define
+            promise.then(_doFetch.call(this, {
+
+                // only HTTP 301, HTTP 302, and HTTP 303 redirects change HTTP method to GET
+                method: (response.status !== 307 && response.status !== 308) ? 'GET' : request.method,
+                headers: request.headers,
+                body: request.body
+            }));
+        }
+        return promise;
     }
     return Promise.resolve(response);
 }
 function _doFetch({ method, headers, body = null }) {
-    let requestHeaders = new Headers(headers);
-    let requestData = { method: method, headers: requestHeaders, credentials: 'include' };
+    const requestData = {
+        method: method,
+        headers: new Headers(headers),
+        credentials: 'include',
+        redirect: this._followRedirects && this._cookieManager === null ? 'follow' : 'manual'
+    };
     if(body !== null) {
         requestData.body = body;
     }
-    let request = new Request(this._url.toString(), requestData);
-    return _readCookies.call(this, request).then(fetch).then(_handleHttpError).then(_handleCookies.bind(this));
+    const request = new Request(this._url.toString(), requestData);
+    return _readCookies.call(this, request)
+        .then(this._fetch)
+        .then(_handleHttpError)
+
+        // cookie manager needs request in the event it must resolve a redirect
+        .then((response) => _handleCookies.bind(this, request, response));
 }
 
 /**
@@ -492,7 +521,6 @@ function _doFetch({ method, headers, body = null }) {
 class Plug {
 
     /**
-     *
      * @param {String} [url=/] The initial URL to start the URL building from and to ultimately send HTTP requests to.
      * @param {Object} [options] Options to direct the construction of the Plug.
      * @param {Object} [options.uriParts] An object representation of additional URI construction parameters.
@@ -503,8 +531,18 @@ class Plug {
      * @param {Number} [options.timeout=null] The time, in milliseconds, to wait before an HTTP timeout.
      * @param {function} [options.beforeRequest] A function that is called before each HTTP request that allows per-request manipulation of the request headers and query parameters.
      * @param {Object} [options.cookieManager] An object that implements a cookie management interface. This should provide implementations for the `getCookieString()` and `storeCookies()` functions.
+     * @param {Boolean} [options.followRedirects] Should HTTP redirects be auto-followed, or should HTTP redirect responses be returned to the caller (default: true)
+     * @param {function} [options.fetchImpl] whatwg/fetch implementation (default: window.fetch)
      */
-    constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params, cookieManager = null } = {}) {
+    constructor(url = '/', {
+        uriParts = {},
+        headers = {},
+        timeout = null,
+        beforeRequest = (params) => params,
+        cookieManager = null,
+        followRedirects = true,
+        fetchImpl = fetch
+    } = {}) {
 
         // Initialize the url for this instance
         this._url = new Uri(url);
@@ -517,11 +555,12 @@ class Plug {
         if('excludeQuery' in uriParts) {
             this._url.removeQueryParam(uriParts.excludeQuery);
         }
-
         this._beforeRequest = beforeRequest;
         this._timeout = timeout;
         this._headers = headers;
         this._cookieManager = cookieManager;
+        this._followRedirects = followRedirects;
+        this._fetch = fetchImpl;
     }
 
     /**
@@ -628,7 +667,7 @@ class Plug {
      * @returns {Plug} A new Plug instance with the headers included.
      */
     withHeaders(values) {
-        let newHeaders = Object.assign({}, this._headers);
+        const newHeaders = Object.assign({}, this._headers);
         Object.keys(values).forEach((key) => {
             newHeaders[key] = values[key];
         });
@@ -646,7 +685,7 @@ class Plug {
      * @returns {Plug} A new Plug instance with the header excluded.
      */
     withoutHeader(key) {
-        let newHeaders = Object.assign({}, this._headers);
+        const newHeaders = Object.assign({}, this._headers);
         delete newHeaders[key];
         return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
@@ -662,7 +701,7 @@ class Plug {
      * @returns {Promise} A Promise that, when resolved, yields the {Response} object as defined by the fetch API.
      */
     get(method = 'GET') {
-        let params = this._beforeRequest({ method: method, headers: Object.assign({}, this._headers) });
+        const params = this._beforeRequest({ method: method, headers: Object.assign({}, this._headers) });
         return _doFetch.call(this, params);
     }
 
@@ -677,7 +716,7 @@ class Plug {
         if(mime) {
             this._headers['Content-Type'] = mime;
         }
-        let params = this._beforeRequest({ method: method, body: body, headers: Object.assign({}, this._headers) });
+        const params = this._beforeRequest({ method: method, body: body, headers: Object.assign({}, this._headers) });
         return _doFetch.call(this, params);
     }
 
