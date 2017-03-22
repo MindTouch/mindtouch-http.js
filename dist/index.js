@@ -467,7 +467,7 @@ function _handleHttpError(response) {
         }
 
         // throw for all non-2xx status codes, except for 304
-        if((!response.ok && response.status !== 304)) {
+        if(!response.ok && response.status !== 304) {
             response.text().then((text) => {
                 reject({
                     message: response.statusText,
