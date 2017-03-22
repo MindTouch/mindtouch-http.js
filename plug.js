@@ -1,5 +1,5 @@
 /**
- * Martian - Core JavaScript API for MindTouch
+ * mindtouch-http.js - A JavaScript library to construct URLs and make HTTP requests using the fetch API
  *
  * Copyright (c) 2015 MindTouch Inc.
  * www.mindtouch.com  oss@mindtouch.com
@@ -17,10 +17,30 @@
  * limitations under the License.
  */
 import { Uri } from './uri.js';
+function _isRedirectResponse(response) {
+    if(!response.headers.has('location')) {
+        return false;
+    }
+    const code = response.status;
+    return code === 301 || code === 302 || code === 303 || code === 307 || code === 308;
+}
 function _handleHttpError(response) {
     return new Promise((resolve, reject) => {
+        const isRedirectResponse = _isRedirectResponse(response);
 
-        // Throw for all non-2xx status codes, except for 304
+        // a redirect response from fetch when a cookie manager is present is resolved later
+        if(isRedirectResponse && this._followRedirects && this._cookieManager !== null) {
+            resolve(response);
+            return;
+        }
+
+        // a redirect response when follow redirects is false is valid
+        if(isRedirectResponse && !this._followRedirects) {
+            resolve(response);
+            return;
+        }
+
+        // throw for all non-2xx status codes, except for 304
         if(!response.ok && response.status !== 304) {
             response.text().then((text) => {
                 reject({
@@ -46,18 +66,44 @@ function _readCookies(request) {
 }
 function _handleCookies(response) {
     if(this._cookieManager !== null) {
-        return this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
+
+        // NOTE (@modethirteen, 20170321): Headers.getAll() is obsolete and will be removed: https://developer.mozilla.org/en-US/docs/Web/API/Headers/getAll
+        // Headers.get() will cease to return first header of a key, and instead take on the same behavior of Headers.getAll()
+        const cookies = response.headers.getAll ? response.headers.getAll('Set-Cookie') : response.headers.get('Set-Cookie').split(',');
+        return this._cookieManager.storeCookies(response.url, cookies).then(() => response);
     }
     return Promise.resolve(response);
 }
-function _doFetch({ method, headers, body = null }) {
-    let requestHeaders = new Headers(headers);
-    let requestData = { method: method, headers: requestHeaders, credentials: 'include' };
+function _doFetch({ url, method, headers, body = null }) {
+    const requestData = {
+        method: method,
+        headers: new Headers(headers),
+        credentials: 'include',
+
+        // redirect resolution when a cookie manager is set will be handled in plug, not fetch
+        redirect: this._followRedirects && this._cookieManager === null ? 'follow' : 'manual'
+    };
     if(body !== null) {
         requestData.body = body;
     }
-    let request = new Request(this._url.toString(), requestData);
-    return _readCookies.call(this, request).then(fetch).then(_handleHttpError).then(_handleCookies.bind(this));
+    const request = new Request(url, requestData);
+    return _readCookies.call(this, request)
+        .then(this._fetch)
+        .then(_handleHttpError.bind(this))
+        .then(_handleCookies.bind(this))
+        .then((response) => {
+            if(this._followRedirects && _isRedirectResponse(response)) {
+                return _doFetch.call(this, {
+                    url: response.headers.get('location'),
+
+                    // HTTP 307/308 maintain request method
+                    method: (response.status !== 307 && response.status !== 308) ? 'GET' : request.method,
+                    headers: request.headers,
+                    body: request.body
+                });
+            }
+            return response;
+        });
 }
 
 /**
@@ -66,7 +112,6 @@ function _doFetch({ method, headers, body = null }) {
 export class Plug {
 
     /**
-     *
      * @param {String} [url=/] The initial URL to start the URL building from and to ultimately send HTTP requests to.
      * @param {Object} [options] Options to direct the construction of the Plug.
      * @param {Object} [options.uriParts] An object representation of additional URI construction parameters.
@@ -77,8 +122,18 @@ export class Plug {
      * @param {Number} [options.timeout=null] The time, in milliseconds, to wait before an HTTP timeout.
      * @param {function} [options.beforeRequest] A function that is called before each HTTP request that allows per-request manipulation of the request headers and query parameters.
      * @param {Object} [options.cookieManager] An object that implements a cookie management interface. This should provide implementations for the `getCookieString()` and `storeCookies()` functions.
+     * @param {Boolean} [options.followRedirects] Should HTTP redirects be auto-followed, or should HTTP redirect responses be returned to the caller (default: true)
+     * @param {function} [options.fetchImpl] whatwg/fetch implementation (default: window.fetch)
      */
-    constructor(url = '/', { uriParts = {}, headers = {}, timeout = null, beforeRequest = (params) => params, cookieManager = null } = {}) {
+    constructor(url = '/', {
+        uriParts = {},
+        headers = {},
+        timeout = null,
+        beforeRequest = (params) => params,
+        cookieManager = null,
+        followRedirects = true,
+        fetchImpl = fetch
+    } = {}) {
 
         // Initialize the url for this instance
         this._url = new Uri(url);
@@ -91,11 +146,12 @@ export class Plug {
         if('excludeQuery' in uriParts) {
             this._url.removeQueryParam(uriParts.excludeQuery);
         }
-
         this._beforeRequest = beforeRequest;
         this._timeout = timeout;
         this._headers = headers;
         this._cookieManager = cookieManager;
+        this._followRedirects = followRedirects;
+        this._fetch = fetchImpl;
     }
 
     /**
@@ -118,7 +174,7 @@ export class Plug {
      * @returns {Plug} The Plug with the segments included.
      */
     at(...segments) {
-        var values = [];
+        const values = [];
         segments.forEach((segment) => {
             values.push(segment.toString());
         });
@@ -127,7 +183,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { segments: values },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -138,14 +196,16 @@ export class Plug {
      * @returns {Plug} A new Plug instance with the query parameter included.
      */
     withParam(key, value) {
-        let params = {};
+        const params = {};
         params[key] = value;
         return new this.constructor(this._url.toString(), {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { query: params },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -160,7 +220,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { query: values },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -175,7 +237,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { excludeQuery: key },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -186,13 +250,15 @@ export class Plug {
      * @returns {Plug} A new Plug instance with the header included.
      */
     withHeader(key, value) {
-        let newHeaders = Object.assign({}, this._headers);
+        const newHeaders = Object.assign({}, this._headers);
         newHeaders[key] = value;
         return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -202,7 +268,7 @@ export class Plug {
      * @returns {Plug} A new Plug instance with the headers included.
      */
     withHeaders(values) {
-        let newHeaders = Object.assign({}, this._headers);
+        const newHeaders = Object.assign({}, this._headers);
         Object.keys(values).forEach((key) => {
             newHeaders[key] = values[key];
         });
@@ -210,7 +276,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -220,13 +288,44 @@ export class Plug {
      * @returns {Plug} A new Plug instance with the header excluded.
      */
     withoutHeader(key) {
-        let newHeaders = Object.assign({}, this._headers);
+        const newHeaders = Object.assign({}, this._headers);
         delete newHeaders[key];
         return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            fetchImpl: this._fetch
+        });
+    }
+
+    /**
+     * Get a new Plug, based on the current one, with follow redirects enabled
+     * @returns {Plug} A new Plug instance with follow redirects enabled
+     */
+    withFollowRedirects() {
+        return new this.constructor(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: this._headers,
+            cookieManager: this._cookieManager,
+            followRedirects: true,
+            fetchImpl: this._fetch
+        });
+    }
+
+    /**
+     * Get a new Plug, based on the current one, with follow redirects disabled
+     * @returns {Plug} A new Plug instance with follow redirects disabled
+     */
+    withoutFollowRedirects() {
+        return new this.constructor(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: this._headers,
+            cookieManager: this._cookieManager,
+            followRedirects: false,
+            fetchImpl: this._fetch
         });
     }
 
@@ -236,7 +335,11 @@ export class Plug {
      * @returns {Promise} A Promise that, when resolved, yields the {Response} object as defined by the fetch API.
      */
     get(method = 'GET') {
-        let params = this._beforeRequest({ method: method, headers: Object.assign({}, this._headers) });
+        const params = this._beforeRequest({
+            url: this._url.toString(),
+            method: method,
+            headers: Object.assign({}, this._headers)
+        });
         return _doFetch.call(this, params);
     }
 
@@ -251,7 +354,12 @@ export class Plug {
         if(mime) {
             this._headers['Content-Type'] = mime;
         }
-        let params = this._beforeRequest({ method: method, body: body, headers: Object.assign({}, this._headers) });
+        const params = this._beforeRequest({
+            url: this._url.toString(),
+            method: method,
+            body: body,
+            headers: Object.assign({}, this._headers)
+        });
         return _doFetch.call(this, params);
     }
 
