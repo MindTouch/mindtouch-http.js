@@ -293,7 +293,7 @@ describe('Plug JS', () => {
             it(`can follow a ${status} status GET redirect and set cookie`, () => {
                 global.fetch = jest.genMockFunction();
                 const url = 'http://example.com/';
-                const location = 'https://bar.foo.com'; 
+                const location = 'https://bar.foo.com';
                 const redirect = new Response('', {
                     url,
                     status,
@@ -329,7 +329,7 @@ describe('Plug JS', () => {
             it(`can follow a ${status} status POST redirect and set cookie`, () => {
                 global.fetch = jest.genMockFunction();
                 const url = 'http://example.com/';
-                const location = 'https://bar.foo.com'; 
+                const location = 'https://bar.foo.com';
                 const redirect = new Response('', {
                     url,
                     status,
