@@ -3,6 +3,9 @@
 import 'fetch';
 import { Plug } from '../plug.js';
 describe('Plug JS', () => {
+    beforeEach(() => {
+        global.fetch = jest.genMockFunction();
+    });
     describe('constructor', () => {
         it('can construct a Plug with defaults', () => {
             let p = new Plug();
@@ -26,6 +29,27 @@ describe('Plug JS', () => {
             let h = p.headers;
             expect(h instanceof Headers).toBe(true);
             expect(h.get('X-Deki-Token')).toBe('abcd1234');
+        });
+    });
+    describe('whatwg/fetch implementation', () => {
+        beforeEach(() => {
+            global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
+        });
+        it('is global', () => {
+            const plug = new Plug('http://example.com');
+            return plug.get().then(() => {
+                expect(global.fetch).toBeCalled();
+            });
+        });
+        it('is dependency injected', () => {
+            const fetchMock = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response()));
+            const plug = new Plug('http://example.com', {
+                fetchImpl: fetchMock
+            });
+            return plug.get().then(() => {
+                expect(global.fetch).not.toBeCalled();
+                expect(fetchMock).toBeCalled();
+            });
         });
     });
     describe('URI construction', () => {
@@ -143,20 +167,44 @@ describe('Plug JS', () => {
         });
     });
     describe('HTTP codes', () => {
-        let p = null;
-        beforeEach(() => {
-            p = new Plug('http://example.com/');
-        });
-        afterEach(() => {
-            p = null;
-        });
         it('can fail with a 5xx error', () => {
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 500 })));
+            const p = new Plug('http://example.com/');
             return p.get().catch((e) => expect(e).toBeDefined());
         });
         it('can pass with a 304 status', () => {
             global.fetch = jest.genMockFunction().mockReturnValueOnce(Promise.resolve(new Response('', { status: 304 })));
+            const p = new Plug('http://example.com/');
             return p.get();
+        });
+    });
+    describe('Redirect with Cookie Jar', () => {
+        it('can follow a redirect and set cookie', () => {
+            global.fetch = jest.genMockFunction();
+            const url = 'http://example.com/';
+            const redirect = new Response('', {
+                url,
+                status: 302,
+                headers: new Headers({
+                    location: 'https://bar.foo.com',
+                    'set-cookie': 'authtoken="123"'
+                })
+            });
+            global.fetch.mockReturnValueOnce(Promise.resolve(redirect));
+            const resolved = new Response();
+            global.fetch.mockReturnValueOnce(Promise.resolve(resolved));
+            const cookieManager = require('../lib/cookieJar');
+            const p = new Plug(url, {
+                followRedirects: true,
+                cookieManager
+            });
+            return p.get().then((r) => {
+                expect(global.fetch.mock.calls.length).toBe(2);
+                expect(r).toBe(resolved);
+                return cookieManager.getCookieString(url);
+            }).then((cookie) => {
+                expect(cookie).toBe('authtoken="123"');
+            });
         });
     });
     describe('Cookie Jar', () => {

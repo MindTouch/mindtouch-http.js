@@ -18,7 +18,7 @@
  */
 import { Uri } from './uri.js';
 function _isRedirectResponse(response) {
-    if(!response.headers.has('location')) {
+    if(!response.headers || !response.headers.has('location')) {
         return false;
     }
     const code = response.status;
@@ -26,9 +26,22 @@ function _isRedirectResponse(response) {
 }
 function _handleHttpError(response) {
     return new Promise((resolve, reject) => {
+        const isRedirectResponse = _isRedirectResponse(response);
 
-        // Throw for all non-2xx status codes, except for 304
-        if(!response.ok && response.status !== 304) {
+        // a redirect response from fetch when a cookie manager is present is resolved later
+        if(isRedirectResponse && this._followRedirects && this._cookieManager !== null) {
+            resolve(response);
+            return;
+        }
+
+        // a redirect response when follow redirects is false is valid
+        if(isRedirectResponse && !this._followRedirects) {
+            resolve(response);
+            return;
+        }
+
+        // throw for all non-2xx status codes, except for 304
+        if((!response.ok && response.status !== 304)) {
             response.text().then((text) => {
                 reject({
                     message: response.statusText,
@@ -51,22 +64,13 @@ function _readCookies(request) {
     }
     return Promise.resolve(request);
 }
-function _handleCookies(request, response) {
+function _handleCookies(response) {
     if(this._cookieManager !== null) {
-        const promise = this._cookieManager.storeCookies(response.url, response.headers.getAll('Set-Cookie')).then(() => response);
-        if(this._followRedirects && _isRedirectResponse(response)) {
 
-            // follow redirect after handling set-cookie HTTP header
-            // eslint-disable-next-line no-use-before-define
-            promise.then(_doFetch.call(this, {
-
-                // only HTTP 301, HTTP 302, and HTTP 303 redirects change HTTP method to GET
-                method: (response.status !== 307 && response.status !== 308) ? 'GET' : request.method,
-                headers: request.headers,
-                body: request.body
-            }));
-        }
-        return promise;
+        // NOTE (@modethirteen, 20170321): Headers.getAll() is obsolete and will be removed: https://developer.mozilla.org/en-US/docs/Web/API/Headers/getAll
+        // Headers.get() will cease to return first header of a key, and instead take on the same behavior of Headers.getAll()
+        const cookies = response.headers.getAll ? response.headers.getAll('Set-Cookie') : response.headers.get('Set-Cookie').split(',');
+        return this._cookieManager.storeCookies(response.url, cookies).then(() => response);
     }
     return Promise.resolve(response);
 }
@@ -75,6 +79,8 @@ function _doFetch({ method, headers, body = null }) {
         method: method,
         headers: new Headers(headers),
         credentials: 'include',
+
+        // redirect resolution when a cookie manager is set will be handled in plug, not fetch
         redirect: this._followRedirects && this._cookieManager === null ? 'follow' : 'manual'
     };
     if(body !== null) {
@@ -83,10 +89,20 @@ function _doFetch({ method, headers, body = null }) {
     const request = new Request(this._url.toString(), requestData);
     return _readCookies.call(this, request)
         .then(this._fetch)
-        .then(_handleHttpError)
+        .then(_handleHttpError.bind(this))
+        .then(_handleCookies.bind(this))
+        .then((response) => {
+            if(this._followRedirects && _isRedirectResponse(response)) {
+                return _doFetch.call(this, {
 
-        // cookie manager needs request in the event it must resolve a redirect
-        .then((response) => _handleCookies.bind(this, request, response));
+                    // HTTP 307/308 maintain request method
+                    method: (response.status !== 307 && response.status !== 308) ? 'GET' : request.method,
+                    headers: request.headers,
+                    body: request.body
+                });
+            }
+            return response;
+        });
 }
 
 /**

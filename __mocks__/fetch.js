@@ -1,35 +1,75 @@
 /* eslint-env node */
 class Headers {
-    constructor(obj) {
-        this._headers = obj;
+    constructor(headers = {}) {
+        this._headers = {};
+        for(let header in headers) {
+            if(headers.hasOwnProperty(header)) {
+                this.set(header, headers[header]);
+            }
+        }
     }
     get(key) {
+        let values = this.getAll(key);
+        return values.length ? values.join(',') : null;
+    }
+    set(key, value) {
+        key = key.toLowerCase();
+        this._headers[key] = this._headers[key] || [];
+        this._headers[key].push(value);
+    }
+    has(key) {
+        return typeof this._headers[key.toLowerCase()] !== 'undefined';
+    }
+    getAll(key) {
+        key = key.toLowerCase();
         if(!(key in this._headers)) {
-            return null;
+            return [];
         }
         return this._headers[key];
     }
-    set(key, value) {
-        if(!this._headers) {
-            this._headers = {};
-        }
-        this._headers[key] = value;
-    }
-    getAll() {
-        return [];
-    }
 }
 class Request {
+    constructor(url = 'https://www.example.com', {
+        method = 'GET',
+        redirect = 'follow',
+        credentials = 'include',
+        headers = new Headers()
+    } = {}) {
+        this._url = url;
+        this._method = method;
+        this._redirect = redirect;
+        this._credentials = credentials;
+        this._headers = headers;
+    }
     get url() {
-        return 'https://www.example.com';
+        return this._url;
+    }
+    get method() {
+        return this._method;
+    }
+    get redirect() {
+        return this._redirect;
+    }
+    get credentials() {
+        return this._credentials;
     }
     get headers() {
-        return new Headers();
+        return this._headers;
     }
 }
 class Response {
-    constructor(body = '', init = {}) {
-        this._status = init.status || 200;
+    constructor(body = '', {
+        status = 200,
+        headers = new Headers(),
+        url = 'https://www.example.com'
+    } = {}) {
+        this._body = body;
+        this._status = status;
+        this._headers = headers;
+        this._url = url;
+    }
+    get url() {
+        return this._url;
     }
     get ok() {
         return this._status >= 200 && this._status < 300;
@@ -37,14 +77,21 @@ class Response {
     get status() {
         return this._status;
     }
+    get statusText() {
+        return '';
+    }
     get headers() {
-        return new Headers();
+        return this._headers;
     }
     text() {
-        return Promise.resolve('');
+        return Promise.resolve(this._body);
     }
     json() {
-        return Promise.resolve({});
+        try {
+            return Promise.resolve(JSON.parse(this._body));
+        } catch(e) {
+            return Promise.reject(e);
+        }
     }
 }
 global.Headers = Headers;
