@@ -174,7 +174,7 @@ export class Plug {
      * @returns {Plug} The Plug with the segments included.
      */
     at(...segments) {
-        var values = [];
+        const values = [];
         segments.forEach((segment) => {
             values.push(segment.toString());
         });
@@ -183,7 +183,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { segments: values },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -194,14 +196,16 @@ export class Plug {
      * @returns {Plug} A new Plug instance with the query parameter included.
      */
     withParam(key, value) {
-        let params = {};
+        const params = {};
         params[key] = value;
         return new this.constructor(this._url.toString(), {
             headers: this._headers,
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { query: params },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -216,7 +220,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { query: values },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -231,7 +237,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             uriParts: { excludeQuery: key },
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -242,13 +250,15 @@ export class Plug {
      * @returns {Plug} A new Plug instance with the header included.
      */
     withHeader(key, value) {
-        let newHeaders = Object.assign({}, this._headers);
+        const newHeaders = Object.assign({}, this._headers);
         newHeaders[key] = value;
         return new this.constructor(this._url.toString(), {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -266,7 +276,9 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            followRedirects: this._followRedirects,
+            fetchImpl: this._fetch
         });
     }
 
@@ -282,7 +294,38 @@ export class Plug {
             timeout: this._timeout,
             beforeRequest: this._beforeRequest,
             headers: newHeaders,
-            cookieManager: this._cookieManager
+            cookieManager: this._cookieManager,
+            fetchImpl: this._fetch
+        });
+    }
+
+    /**
+     * Get a new Plug, based on the current one, with follow redirects enabled
+     * @returns {Plug} A new Plug instance with follow redirects enabled
+     */
+    withFollowRedirects() {
+        return new this.constructor(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: this._headers,
+            cookieManager: this._cookieManager,
+            followRedirects: true,
+            fetchImpl: this._fetch
+        });
+    }
+
+    /**
+     * Get a new Plug, based on the current one, with follow redirects disabled
+     * @returns {Plug} A new Plug instance with follow redirects disabled
+     */
+    withoutFollowRedirects() {
+        return new this.constructor(this._url.toString(), {
+            timeout: this._timeout,
+            beforeRequest: this._beforeRequest,
+            headers: this._headers,
+            cookieManager: this._cookieManager,
+            followRedirects: false,
+            fetchImpl: this._fetch
         });
     }
 
