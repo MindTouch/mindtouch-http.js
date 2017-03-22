@@ -178,15 +178,63 @@ describe('Plug JS', () => {
             return p.get();
         });
     });
-    describe('Redirect with Cookie Jar', () => {
+    describe('Following Redirects', () => {
+        it('can fail if not following redirects and HTTP 3xx without location header', () => {
+            global.fetch = jest.genMockFunction();
+            global.fetch.mockReturnValueOnce(Promise.resolve(new Response('', { status: 302 })));
+            const p = new Plug('http://example.com', {
+                followRedirects: false
+            });
+            return p.get().catch((e) => expect(e).toBeDefined());
+        });
+        it('can allow a HTTP 301 redirect with location header if not following redirects', () => {
+            global.fetch = jest.genMockFunction();
+            global.fetch.mockReturnValueOnce(Promise.resolve(new Response('', {
+                status: 301,
+                headers: new Headers({
+                    location: 'https://bar.foo.com'
+                })
+            })));
+            const p = new Plug('http://example.com', {
+                followRedirects: false
+            });
+            return p.get();
+        });
+        it('can follow a HTTP 302 redirect with location header if not following redirects', () => {
+            global.fetch = jest.genMockFunction();
+            global.fetch.mockReturnValueOnce(Promise.resolve(new Response('', {
+                status: 302,
+                headers: new Headers({
+                    location: 'https://bar.foo.com'
+                })
+            })));
+            const p = new Plug('http://example.com', {
+                followRedirects: false
+            });
+            return p.get();
+        });
+        it('can follow a HTTP 303 redirect with location header if not following redirects', () => {
+            global.fetch = jest.genMockFunction();
+            global.fetch.mockReturnValueOnce(Promise.resolve(new Response('', {
+                status: 303,
+                headers: new Headers({
+                    location: 'https://bar.foo.com'
+                })
+            })));
+            const p = new Plug('http://example.com', {
+                followRedirects: false
+            });
+            return p.get();
+        });
         it('can follow a redirect and set cookie', () => {
             global.fetch = jest.genMockFunction();
             const url = 'http://example.com/';
+            const location = 'https://bar.foo.com'; 
             const redirect = new Response('', {
                 url,
                 status: 302,
                 headers: new Headers({
-                    location: 'https://bar.foo.com',
+                    location,
                     'set-cookie': 'authtoken="123"'
                 })
             });
@@ -200,6 +248,10 @@ describe('Plug JS', () => {
             });
             return p.get().then((r) => {
                 expect(global.fetch.mock.calls.length).toBe(2);
+                const request1 = global.fetch.mock.calls[0][0];
+                expect(request1.url).toBe(url);
+                const request2 = global.fetch.mock.calls[1][0];
+                expect(request2.url).toBe(location);
                 expect(r).toBe(resolved);
                 return cookieManager.getCookieString(url);
             }).then((cookie) => {

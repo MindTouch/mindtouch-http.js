@@ -18,7 +18,7 @@
  */
 import { Uri } from './uri.js';
 function _isRedirectResponse(response) {
-    if(!response.headers || !response.headers.has('location')) {
+    if(!response.headers.has('location')) {
         return false;
     }
     const code = response.status;
@@ -74,7 +74,7 @@ function _handleCookies(response) {
     }
     return Promise.resolve(response);
 }
-function _doFetch({ method, headers, body = null }) {
+function _doFetch({ url, method, headers, body = null }) {
     const requestData = {
         method: method,
         headers: new Headers(headers),
@@ -86,7 +86,7 @@ function _doFetch({ method, headers, body = null }) {
     if(body !== null) {
         requestData.body = body;
     }
-    const request = new Request(this._url.toString(), requestData);
+    const request = new Request(url, requestData);
     return _readCookies.call(this, request)
         .then(this._fetch)
         .then(_handleHttpError.bind(this))
@@ -94,6 +94,7 @@ function _doFetch({ method, headers, body = null }) {
         .then((response) => {
             if(this._followRedirects && _isRedirectResponse(response)) {
                 return _doFetch.call(this, {
+                    url: response.headers.get('location'),
 
                     // HTTP 307/308 maintain request method
                     method: (response.status !== 307 && response.status !== 308) ? 'GET' : request.method,
@@ -291,7 +292,11 @@ export class Plug {
      * @returns {Promise} A Promise that, when resolved, yields the {Response} object as defined by the fetch API.
      */
     get(method = 'GET') {
-        const params = this._beforeRequest({ method: method, headers: Object.assign({}, this._headers) });
+        const params = this._beforeRequest({
+            url: this._url.toString(),
+            method: method,
+            headers: Object.assign({}, this._headers)
+        });
         return _doFetch.call(this, params);
     }
 
@@ -306,7 +311,12 @@ export class Plug {
         if(mime) {
             this._headers['Content-Type'] = mime;
         }
-        const params = this._beforeRequest({ method: method, body: body, headers: Object.assign({}, this._headers) });
+        const params = this._beforeRequest({
+            url: this._url.toString(),
+            method: method,
+            body: body,
+            headers: Object.assign({}, this._headers)
+        });
         return _doFetch.call(this, params);
     }
 
