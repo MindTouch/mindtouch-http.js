@@ -1,5 +1,5 @@
 /**
- * Martian - Core JavaScript API for MindTouch
+ * mindtouch-http.js - A JavaScript library to construct URLs and make HTTP requests using the fetch API
  *
  * Copyright (c) 2015 MindTouch Inc.
  * www.mindtouch.com  oss@mindtouch.com
