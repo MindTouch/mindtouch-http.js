@@ -2,9 +2,7 @@ __coverage-*__/
 __mocks__/
 __tests__/
 docs/
-node_modules/
 .babelrc
-.DS_Store
 .eslintignore
 .eslintrc
 .idea
@@ -13,4 +11,3 @@ node_modules/
 .travis.yml
 jest-jsdom.json
 jest-node.json
-npm-debug.log
