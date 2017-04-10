@@ -1,13 +1,13 @@
 {
-  "name": "mindtouch-http.js",
+  "name": "@mindtouch/mindtouch-http.js",
   "main": "dist/index.js",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "A JavaScript library to construct URLs and make HTTP requests using the fetch API",
   "format": "esm",
   "registry": "npm",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MindTouch/mindtouch-http.js"
+    "url": "git+https://github.com/MindTouch/mindtouch-http.js.git"
   },
   "scripts": {
     "test-node": "jest --config jest-node.json",
@@ -33,5 +33,8 @@
     "jest-cli": "19.0.2",
     "jsdoc": "^3.4.3",
     "rollup": "^0.41.6"
+  },
+  "directories": {
+    "doc": "docs"
   }
 }
