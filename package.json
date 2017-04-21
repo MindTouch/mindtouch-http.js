@@ -1,7 +1,7 @@
 {
   "name": "@mindtouch/mindtouch-http.js",
   "main": "dist/index.js",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "A JavaScript library to construct URLs and make HTTP requests using the fetch API",
   "format": "esm",
   "registry": "npm",
