@@ -78,6 +78,10 @@ describe('URI Parser', () => {
             uri.protocol = 'https:';
             expect(uri.toString()).toBe('https://user:password@www.google.com:9000/foo/bar?dog=cat&abc=123#hashhash');
         });
+        it('can remove the protocol', () => {
+            uri.protocol = null;
+            expect(uri.toString()).toBe('/foo/bar?dog=cat&abc=123#hashhash');
+        });
         it('can manipulate the username', () => {
             uri.username = 'admin';
             expect(uri.toString()).toBe('http://admin:password@www.google.com:9000/foo/bar?dog=cat&abc=123#hashhash');
@@ -95,6 +99,10 @@ describe('URI Parser', () => {
         it('can manipulate the hostname', () => {
             uri.hostname = 'www.example.org';
             expect(uri.toString()).toBe('http://user:password@www.example.org:9000/foo/bar?dog=cat&abc=123#hashhash');
+        });
+        it('can remove the hostname', () => {
+            uri.hostname = null;
+            expect(uri.toString()).toBe('/foo/bar?dog=cat&abc=123#hashhash');
         });
         it('can manipulate the port', () => {
             uri.port = '7777';
