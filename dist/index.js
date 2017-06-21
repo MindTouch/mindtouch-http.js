@@ -22,17 +22,17 @@ Object.defineProperty(exports, '__esModule', { value: true });
  */
 const uriParser = /^(?:(?![^:@]+:[^:@/]*@)([^:/?#.]+:))?(?:\/\/)?(?:([^:@/]*)(?::([^:@/]*))?@)?(\[[0-9a-fA-F.]+]|[^:/?#]*)(?::(\d+|(?=:)))?((?:[^?#])*\/?)?[^?#/]*(?:(\?[^#]*))?(?:(#.*))?/;
 function _parseUri(str) {
-    var parserKeys = [ 'href', 'protocol', 'username', 'password', 'hostname', 'port', 'pathname', 'search', 'hash' ];
-    var m = uriParser.exec(str);
-    var parts = {};
+    const parserKeys = [ 'href', 'protocol', 'username', 'password', 'hostname', 'port', 'pathname', 'search', 'hash' ];
+    const m = uriParser.exec(str);
+    const parts = {};
     parserKeys.forEach(function(key, i) {
         parts[key] = m[i];
     });
     return parts;
 }
 function _searchStringToParams(search) {
-    let params = [];
-    let queryEntries = search.split('&');
+    const params = [];
+    const queryEntries = search.split('&');
     queryEntries.forEach((entry) => {
         let kvp = entry.split('=');
         params.push([ kvp[0], kvp[1] ]);
@@ -41,39 +41,39 @@ function _searchStringToParams(search) {
 }
 class UriSearchParams {
     constructor(searchString) {
-        this.params = [];
+        this._params = [];
         if(searchString && searchString !== '') {
             if(searchString[0] === '?') {
                 searchString = searchString.slice(1);
             }
-            this.params = _searchStringToParams(searchString);
+            this._params = _searchStringToParams(searchString);
         }
     }
     append(name, value) {
-        this.params.push([ name, value ]);
+        this._params.push([ name, value ]);
     }
     delete(name) {
-        let newParams = [];
-        this.params.forEach((pair) => {
+        const newParams = [];
+        this._params.forEach((pair) => {
             if(pair[0] !== name) {
                 newParams.push(pair);
             }
         });
-        this.params = newParams;
+        this._params = newParams;
     }
     get(name) {
         let found = null;
-        for(let i = 0; i < this.params.length; i++) {
-            if(this.params[i][0] === name) {
-                found = this.params[i][1];
+        for(let i = 0; i < this._params.length; i++) {
+            if(this._params[i][0] === name) {
+                found = this._params[i][1];
                 break;
             }
         }
         return found;
     }
     getAll(name) {
-        let found = [];
-        this.params.forEach((param) => {
+        const found = [];
+        this._params.forEach((param) => {
             if(param[0] === name) {
                 found.push(param[1]);
             }
@@ -82,8 +82,8 @@ class UriSearchParams {
     }
     has(name) {
         let found = false;
-        for(let i = 0; i < this.params.length; i++) {
-            if(this.params[i][0] === name) {
+        for(let i = 0; i < this._params.length; i++) {
+            if(this._params[i][0] === name) {
                 found = true;
                 break;
             }
@@ -92,8 +92,8 @@ class UriSearchParams {
     }
     set(name, value) {
         let found = false;
-        let result = [];
-        this.params.forEach((pair) => {
+        const result = [];
+        this._params.forEach((pair) => {
             if(pair[0] === name && !found) {
                 pair[1] = value;
                 result.push(pair);
@@ -102,87 +102,104 @@ class UriSearchParams {
                 result.push(pair);
             }
         });
-        this.params = result;
+        this._params = result;
     }
     get entries() {
-        return this.params;
+        return this._params;
     }
     get count() {
-        return this.params.length;
+        return this._params.length;
     }
     toString() {
-        return this.params.reduce((previous, current, index) => {
+        return this._params.reduce((previous, current, index) => {
             return `${previous}${index === 0 ? '' : '&'}${current[0]}=${current[1]}`;
         }, '');
     }
 }
+
 class UriParser {
     constructor(urlString = '') {
         if(typeof urlString !== 'string') {
             throw new TypeError('Failed to construct \'URL\': The supplied URL must be a string');
         }
-        let parts = _parseUri(urlString);
-        let protocolExists = typeof parts.protocol !== 'undefined' && parts.protocol !== '';
-        let hostExists = typeof parts.hostname !== 'undefined' && parts.hostname !== '';
+        this._parts = _parseUri(urlString);
+        const protocolExists = typeof this._parts.protocol !== 'undefined' && this._parts.protocol !== '';
+        const hostExists = typeof this._parts.hostname !== 'undefined' && this._parts.hostname !== '';
         if((protocolExists && !hostExists) || (!protocolExists && hostExists)) {
             throw new TypeError('Failed to construct \'URL\': Protocol and hostname must be supplied together');
         }
-        if(!protocolExists && !hostExists) {
-            this.hostless = true;
-        }
-        this.parts = parts;
-        this.params = new UriSearchParams(this.parts.search);
+        this._hostless = !protocolExists && !hostExists;
+        this._params = new UriSearchParams(this._parts.search);
     }
 
     // Properties that come directly from the regex
+    get params() {
+        return this._params;
+    }
     get protocol() {
-        return this.parts.protocol.toLowerCase();
+        return this._parts.protocol ? this._parts.protocol.toLowerCase() : '';
     }
     set protocol(val) {
-        this.parts.protocol = val;
+        if(!val) {
+
+            // removing the protocol means converting url to a `hostless` url
+            this._parts.hostname = null;
+            this._parts.protocol = null;
+            this._hostless = true;
+            return;
+        }
+        this._parts.protocol = val;
     }
     get hostname() {
-        return this.parts.hostname;
+        return this._parts.hostname || '';
     }
     set hostname(val) {
-        this.parts.hostname = val;
+        if(!val) {
+
+            // removing the hostname means converting url to a `hostless` url
+            this._parts.hostname = null;
+            this._parts.protocol = null;
+            this._hostless = true;
+            return;
+        }
+        this._parts.hostname = val;
     }
     get port() {
-        return this.parts.port || '';
+        return this._parts.port || '';
     }
     set port(val) {
-        this.parts.port = val;
+        this._parts.port = val;
     }
     get pathname() {
-        return this.parts.pathname || '/';
+        return this._parts.pathname || '/';
     }
     set pathname(val) {
-        this.parts.pathname = val;
+        this._parts.pathname = val;
     }
     get search() {
-        return this.params.entries.length === 0 ? '' : `?${this.params.toString()}`;
+        return this._params.entries.length === 0 ? '' : `?${this._params.toString()}`;
     }
     set search(val) {
-        this.parts.search = val;
-        this.params = new UriSearchParams(val);
+        this._parts.search = val;
+        this._params = new UriSearchParams(val);
     }
     get hash() {
-        return this.parts.hash || '';
+        return this._parts.hash || '';
     }
     set hash(val) {
-        this.parts.hash = val;
+        this._parts.hash = val;
     }
     get username() {
-        return this.parts.username || '';
+        return this._parts.username || '';
     }
     set username(val) {
-        this.parts.username = val;
+        this._parts.username = val;
     }
     get password() {
-        return this.parts.password || '';
+        return this._parts.password || '';
     }
     set password(val) {
-        this.parts.password = val;
+        this._parts.password = val;
     }
 
     // Properties computed from various regex parts
@@ -190,18 +207,18 @@ class UriParser {
         return this.toString();
     }
     set href(val) {
-        this.parts = _parseUri(val);
-        this.search = this.parts.search;
+        this._parts = _parseUri(val);
+        this.search = this._parts.search;
     }
     get host() {
         let host = this.hostname.toLowerCase();
-        if(this.port) {
+        if(host !== '' && this.port) {
             host = `${host}:${this.port}`;
         }
         return host;
     }
     set host(val) {
-        let hostParts = val.split(':');
+        const hostParts = val.split(':');
         this.hostname = hostParts[0];
         if(hostParts.length > 1) {
             this.port = hostParts[1];
@@ -213,15 +230,15 @@ class UriParser {
         return `${this.protocol}//${this.host}`;
     }
     get searchParams() {
-        return this.params;
+        return this._params;
     }
     set searchParams(val) {
-        this.params = val;
-        this.parts.search = `?${val.toString()}`;
+        this._params = val;
+        this._parts.search = `?${val.toString()}`;
     }
     toString() {
-        var hrefString = '';
-        if(!this.hostless) {
+        let hrefString = '';
+        if(!this._hostless) {
             hrefString = `${this.protocol}//`;
             if(this.username && this.username !== '') {
                 hrefString = `${hrefString}${this.username}`;
