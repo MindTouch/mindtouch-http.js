@@ -1,7 +1,7 @@
 {
   "name": "mindtouch-http.js",
   "main": "dist/index.js",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "A JavaScript library to construct URLs and make HTTP requests using the fetch API",
   "format": "esm",
   "registry": "npm",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "babel-jest": "19.0.0",
     "babel-preset-es2015": "6.24.0",
-    "eslint": "3.17.1",
+    "eslint": "6.0.1",
     "eslint-config-mindtouch": "1.0.0",
     "jest-cli": "19.0.2",
     "jsdoc": "^3.4.3",
